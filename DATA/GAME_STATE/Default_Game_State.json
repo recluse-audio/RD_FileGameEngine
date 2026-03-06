@@ -1,0 +1,26 @@
+{
+  "current_level": "Level 1",
+  "current_asset": "Asset 1",
+  "levels":
+  {
+    "LEVEL_1":
+    {
+      "isUnlocked": false,
+      "assets":
+      {
+        "asset_1.md": false,
+        "asset_2.png": false,
+        "avery_1": false
+      }
+    },
+    "LEVEL_2":
+    {
+      "isUnlocked": false,
+      "assets":
+      {
+        "asset_1.md": false,
+        "asset_2.png": false
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "screen":
+  {
+    "width": 320,
+    "height": 240
+  },
+  "sections":
+  {
+    "top_bar":
+    {
+      "label": "Top Bar",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 20
+    },
+    "asset_list":
+    {
+      "label": "Asset List",
+      "x": 0,
+      "y": 20,
+      "width": 64,
+      "height": 220
+    },
+    "asset_view":
+    {
+      "label": "Asset View",
+      "x": 64,
+      "y": 20,
+      "width": 256,
+      "height": 220
+    }
+  }
+}

@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mv RD_ENGINE:*)"
+      "Bash(mv RD_ENGINE:*)",
+      "Bash(for f in /c/REPOS/PROJECTS/KSC/TESTS/*.cpp)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//c/REPOS/PROJECTS/RD_FILE_GAME_ENGINE/**)",
+      "Bash(done)",
+      "Read(//c/REPOS/PROJECTS/KSC/SCRIPTS/**)",
+      "Bash(grep:*)",
+      "Read(//c/REPOS/PROJECTS/KSC/ASSETS//**)",
+      "Read(//c/REPOS/PROJECTS/KSC/KSC_DATA//**)",
+      "Read(//c/REPOS/PROJECTS/KSC/KSC_DATA/GAME_STATE//**)",
+      "Bash(cp:*)"
     ]
   }
 }

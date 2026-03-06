@@ -1,0 +1,9 @@
+{
+  "name": "Level 1",
+  "assets":
+  {
+    "/LEVELS/LEVEL_1/asset_1.md": "Asset 1",
+    "/LEVELS/LEVEL_1/asset_2.png": "Asset 2",
+    "/LEVELS/LEVEL_1/avery_1": "Avery 1"
+  }
+}

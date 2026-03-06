@@ -1,0 +1,12 @@
+{
+  "hires_image_path": "/LOCATIONS/AVERY/DESK/BOOKS/DSP_CLUE/Avery_DSP_Clue.png",
+  "id": "AVERY_DESK_BOOKS_DSP",
+  "isDiscovered": true,
+  "lores_image_path": "/LOCATIONS/AVERY/DESK/BOOKS/DSP_CLUE/Avery_DSP_Clue_320x240.png",
+  "name": "Low Latency DSP",
+  "notePath": "/GAME_STATE/NOTES_STATE/AVERY/Avery_Note.md",
+  "parent": "AVERY_DESK_BOOKS",
+  "parent_path": "/LOCATIONS/AVERY/DESK/BOOKS/FULL/Avery_Desk_Books.json",
+  "secondary_path": "/NOTES/AVERY/AUDIOPHILE/DSP_Clue.md",
+  "zones": []
+}

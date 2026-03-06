@@ -1,0 +1,26 @@
+{
+  "currentMode": "locations",
+  "currentLocation": "",
+  "currentNote": "",
+  "avery_locations": {
+    "/LOCATIONS/AVERY/ROOT/Avery_Full.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_1/Avery_Cable_Cabinet_Drawer_1.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_1/POWERFUL_LAZER_CLUE/Powerful_Lazer_Clue.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_10/Avery_Cable_Cabinet_Drawer_10.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_2/Avery_Cable_Cabinet_Drawer_2.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_2/BLUETOOTH_LAVMIC_CLUE/Bluetooth_LavMic_Clue.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_8/Avery_Cable_Cabinet_Drawer_8.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/DRAWER_9/Avery_Cable_Cabinet_Drawer_9.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/DRAWER/TOP_SHELF/Avery_Cable_Cabinet_Top_Shelf.json": true,
+    "/LOCATIONS/AVERY/CABLE_CABINET/MAIN/Avery_Cable_Cabinet.json": true,
+    "/LOCATIONS/AVERY/DESK/BOOKS/DSP_CLUE/DSP_Clue.json": true,
+    "/LOCATIONS/AVERY/DESK/BOOKS/FULL/Avery_Desk_Books.json": true,
+    "/LOCATIONS/AVERY/DESK/BOOKS/INFINITE_JEST/Avery_Desk_Books_Infinite_Jest.json": true,
+    "/LOCATIONS/AVERY/DESK/BOOKS/INFINITE_JEST/PASSWORD_CLUE/PASSWORD_CLUE.json": true,
+    "/LOCATIONS/AVERY/DESK/BOOKS/SQL_CLUE/SQL_CLUE.json": true,
+    "/LOCATIONS/AVERY/DESK/COMPUTER/Avery_Desk_Computer.json": true,
+    "/LOCATIONS/AVERY/DESK/COMPUTER/FILES/Avery_Desk_Computer_Files.json": true,
+    "/LOCATIONS/AVERY/DESK/COMPUTER/PROGRAMS/Avery_Desk_Computer_Programs.json": true,
+    "/LOCATIONS/AVERY/DESK/MAIN/Avery_Desk.json": true
+  }
+}
