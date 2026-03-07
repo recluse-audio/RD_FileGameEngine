@@ -38,15 +38,15 @@ void GameRunner::loadSections()
         int         height = s.value("height", 0);
         const int*  c      = palette[colorIndex % 5];
 
-        if (id == "asset_list")
+        if (id == "scene_list")
         {
-            mAssetListSection = std::make_unique<AssetListSection>(id, label, x, y, width, height);
-            mAssetListSection->setColor(c[0], c[1], c[2]);
+            mSceneListSection = std::make_unique<SceneListSection>(id, label, x, y, width, height);
+            mSceneListSection->setColor(c[0], c[1], c[2]);
         }
-        else if (id == "asset_view")
+        else if (id == "scene_view")
         {
-            mActiveAssetSection = std::make_unique<ActiveAssetSection>(id, label, x, y, width, height);
-            mActiveAssetSection->setColor(c[0], c[1], c[2]);
+            mActiveSceneSection = std::make_unique<ActiveSceneSection>(id, label, x, y, width, height);
+            mActiveSceneSection->setColor(c[0], c[1], c[2]);
         }
         else
         {
@@ -60,19 +60,52 @@ void GameRunner::loadSections()
 
 void GameRunner::loadLevels()
 {
-    for (const std::string& dirName : mFileOperator.listDirectory("/LEVELS"))
+    for (const std::string& levelDir : mFileOperator.listDirectory("/LEVELS"))
     {
-        std::string infoJson = mFileOperator.load("/LEVELS/" + dirName + "/level_info.json");
+        std::string infoJson = mFileOperator.load("/LEVELS/" + levelDir + "/level_info.json");
         nlohmann::json j = nlohmann::json::parse(infoJson, nullptr, false);
         if (j.is_discarded()) continue;
 
         Level level;
-        level.id   = dirName;
-        level.name = j.value("name", dirName);
+        level.id   = levelDir;
+        level.name = j.value("name", levelDir);
 
-        if (j.contains("assets") && j["assets"].is_object())
-            for (auto& [path, friendly] : j["assets"].items())
-                level.assets[path] = friendly.get<std::string>();
+        const std::string levelPath = "/LEVELS/" + levelDir;
+        for (const std::string& sceneDir : mFileOperator.listDirectory(levelPath))
+        {
+            if (sceneDir.rfind("SCENE_", 0) != 0) continue;
+
+            const std::string scenePath = levelPath + "/" + sceneDir;
+            std::string sceneJson = mFileOperator.load(scenePath + "/scene_info.json");
+            nlohmann::json sj = nlohmann::json::parse(sceneJson, nullptr, false);
+            if (sj.is_discarded()) continue;
+
+            LevelScene scene;
+            scene.id   = sceneDir;
+            scene.name = sj.value("name", sceneDir);
+
+            std::string mdFile  = sj.value("md",  "");
+            std::string pngFile = sj.value("png", "");
+            if (!mdFile.empty())  scene.md  = scenePath + "/" + mdFile;
+            if (!pngFile.empty()) scene.png = scenePath + "/" + pngFile;
+
+            if (sj.contains("zones") && sj["zones"].is_array())
+            {
+                for (auto& z : sj["zones"])
+                {
+                    SceneZone zone;
+                    zone.id     = z.value("id",     "");
+                    zone.x      = z.value("x",      0);
+                    zone.y      = z.value("y",      0);
+                    zone.w      = z.value("w",      0);
+                    zone.h      = z.value("h",      0);
+                    zone.target = z.value("target", "");
+                    scene.zones.push_back(std::move(zone));
+                }
+            }
+
+            level.scenes.push_back(std::move(scene));
+        }
 
         mLevels.push_back(std::move(level));
     }
@@ -82,10 +115,10 @@ void GameRunner::loadInitialState()
 {
     std::string stateJson = mFileOperator.load("/GAME_STATE/Default_Game_State.json");
     nlohmann::json state = nlohmann::json::parse(stateJson, nullptr, false);
-    if (state.is_discarded()) { updateAssetList(); return; }
+    if (state.is_discarded()) { updateSceneList(); return; }
 
     std::string currentLevel = state.value("current_level", "");
-    std::string currentAsset = state.value("current_asset", "");
+    std::string currentScene = state.value("current_scene", "");
 
     for (int i = 0; i < (int)mLevels.size(); ++i)
     {
@@ -96,46 +129,46 @@ void GameRunner::loadInitialState()
         }
     }
 
-    updateAssetList();
+    updateSceneList();
 
-    if (!mAssetListSection || currentAsset.empty()) return;
+    if (!mSceneListSection || currentScene.empty()) return;
 
-    const auto& names = mAssetListSection->getAssets();
+    const auto& names = mSceneListSection->getScenes();
     for (int i = 0; i < (int)names.size(); ++i)
     {
-        if (names[i] == currentAsset)
+        if (names[i] == currentScene)
         {
-            mAssetListSection->setSelectedIndex(i);
+            mSceneListSection->setSelectedIndex(i);
             break;
         }
     }
 
-    updateActiveAsset();
+    updateActiveScene();
 }
 
-void GameRunner::updateAssetList()
+void GameRunner::updateSceneList()
 {
-    if (!mAssetListSection || mLevels.empty()) return;
+    if (!mSceneListSection || mLevels.empty()) return;
 
     const Level& level = mLevels[mActiveLevelIndex];
 
     std::vector<std::string> names;
-    for (const auto& [path, friendly] : level.assets)
-        names.push_back(friendly);
+    for (const auto& scene : level.scenes)
+        names.push_back(scene.name);
 
-    mAssetListSection->setAssets(names);
-
-    if (mActiveAssetSection)
-    {
-        mActiveAssetSection->setLevelAssets(level.assets);
-        updateActiveAsset();
-    }
+    mSceneListSection->setScenes(names);
+    updateActiveScene();
 }
 
-void GameRunner::updateActiveAsset()
+void GameRunner::updateActiveScene()
 {
-    if (!mActiveAssetSection || !mAssetListSection) return;
-    mActiveAssetSection->setActiveAsset(mAssetListSection->getSelectedName());
+    if (!mActiveSceneSection || !mSceneListSection) return;
+
+    int idx = mSceneListSection->getSelectedIndex();
+    if (!mLevels.empty() && idx >= 0 && idx < (int)mLevels[mActiveLevelIndex].scenes.size())
+        mActiveSceneSection->setActiveScene(&mLevels[mActiveLevelIndex].scenes[idx]);
+    else
+        mActiveSceneSection->setActiveScene(nullptr);
 }
 
 void GameRunner::drawTopBar()
@@ -158,11 +191,11 @@ void GameRunner::draw()
     for (const auto& section : mGUISections)
         section.draw(mRenderer, mDoDebugAction);
 
-    if (mAssetListSection)
-        mAssetListSection->draw(mRenderer, mDoDebugAction);
+    if (mSceneListSection)
+        mSceneListSection->draw(mRenderer, mDoDebugAction);
 
-    if (mActiveAssetSection)
-        mActiveAssetSection->draw(mRenderer, mDoDebugAction);
+    if (mActiveSceneSection)
+        mActiveSceneSection->draw(mRenderer, mDoDebugAction);
 
     drawTopBar();
 }
@@ -176,14 +209,14 @@ void GameRunner::nextLevel()
 {
     if (mLevels.empty()) return;
     mActiveLevelIndex = (mActiveLevelIndex + 1) % (int)mLevels.size();
-    updateAssetList();
+    updateSceneList();
 }
 
 void GameRunner::prevLevel()
 {
     if (mLevels.empty()) return;
     mActiveLevelIndex = (mActiveLevelIndex - 1 + (int)mLevels.size()) % (int)mLevels.size();
-    updateAssetList();
+    updateSceneList();
 }
 
 void GameRunner::registerHit(int x, int y)
@@ -197,9 +230,9 @@ void GameRunner::registerHit(int x, int y)
         else if (x >= 320 - k_NavBtnWidth && x < 320)
             nextLevel();
     }
-    else if (mAssetListSection && mAssetListSection->containsPoint(x, y))
+    else if (mSceneListSection && mSceneListSection->containsPoint(x, y))
     {
-        mAssetListSection->registerHit(x, y);
-        updateActiveAsset();
+        mSceneListSection->registerHit(x, y);
+        updateActiveScene();
     }
 }

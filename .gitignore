@@ -1,0 +1,50 @@
+# CMake build output
+BUILD/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.aps
+*.ncb
+*.sdf
+*.opensdf
+ipch/
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Compiled output
+*.exe
+*.pdb
+*.ilk
+*.obj
+*.lib
+*.dll
+*.exp
+*.map
+
+# Arduino / ESP32
+*.elf
+*.bin
+*.hex
+*.map
+
+# Editor
+.vscode/settings.json
+.vscode/c_cpp_properties.json
+*.swp
+*.swo
+*~
+
+# macOS (cross-platform repo)
+.DS_Store

@@ -1,25 +1,25 @@
 {
   "current_level": "Level 1",
-  "current_asset": "Asset 1",
+  "current_scene": "Scene 1",
   "levels":
   {
     "LEVEL_1":
     {
       "isUnlocked": false,
-      "assets":
+      "scenes":
       {
-        "asset_1.md": false,
-        "asset_2.png": false,
-        "avery_1": false
+        "SCENE_1": false,
+        "SCENE_2": false,
+        "SCENE_3": false,
+        "SCENE_4": false
       }
     },
     "LEVEL_2":
     {
       "isUnlocked": false,
-      "assets":
+      "scenes":
       {
-        "asset_1.md": false,
-        "asset_2.png": false
+        "SCENE_1": false
       }
     }
   }
