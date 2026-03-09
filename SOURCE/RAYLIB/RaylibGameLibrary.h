@@ -45,7 +45,13 @@ public:
         {
             if (!gameDir.is_directory()) continue;
 
-            std::string found = findDataDir(gameDir.path(), maxDepth);
+            // Accept the game folder itself as the data root if it contains LEVELS/
+            std::string found;
+            if (fs::exists(gameDir.path() / "LEVELS"))
+                found = gameDir.path().string();
+            else
+                found = findDataDir(gameDir.path(), maxDepth);
+
             if (!found.empty())
             {
                 GameEntry e;
