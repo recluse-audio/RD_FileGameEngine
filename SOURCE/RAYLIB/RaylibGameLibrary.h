@@ -18,14 +18,14 @@ struct GameEntry
  *
  * Scans every subdirectory of FILE_GAMES_ROOT for a folder named "DATA"
  * that contains a "LEVELS" subdirectory (searched up to maxDepth levels deep).
- * The default root is C:\REPOS\PROJECTS\FILE_GAMES on Windows.
+ * The default root is C:\FILE_GAMES\GAMES on Windows.
  */
 class RaylibGameLibrary
 {
 public:
     static constexpr const char* k_DefaultRoot =
 #ifdef _WIN32
-        R"(C:\REPOS\PROJECTS\FILE_GAMES)";
+        R"(C:\FILE_GAMES\GAMES)";
 #else
         "";
 #endif
