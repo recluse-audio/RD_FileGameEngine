@@ -5,6 +5,8 @@
 
 #include "raylib.h"
 #include "RaylibFileOperator.h"
+#include "RaylibGameLibrary.h"
+#include "GamePickerScreen.h"
 #include "RaylibGraphicsRenderer.h"
 #include "../SHARED/GAME_RUNNER/GameRunner.h"
 
@@ -19,28 +21,42 @@ int main()
     SetWindowMinSize(320, 240);
     SetTargetFPS(60);
 
-    RaylibFileOperator     fileParser;
     RaylibGraphicsRenderer renderer;
-    GameRunner             game(fileParser, renderer);
 
     while (!WindowShouldClose())
     {
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        // Discover available FILE_GAMEs each time we return to the library.
+        std::vector<GameEntry> games = RaylibGameLibrary::discover();
+
+        // Show the picker and wait for a selection.
+        GamePickerScreen picker(games);
+        std::string dataPath = picker.run();
+
+        if (dataPath.empty() || WindowShouldClose())
+            break;
+
+        // Run the selected game until the user clicks "home" or closes the window.
+        RaylibFileOperator fileOperator(dataPath);
+        GameRunner         game(fileOperator, renderer);
+
+        while (!WindowShouldClose() && !game.wantsToExitToLibrary())
         {
-            Vector2 mouse = GetMousePosition();
-            int gx, gy;
-            renderer.toGameCoords((int)mouse.x, (int)mouse.y, gx, gy);
-            game.registerHit(gx, gy);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            {
+                Vector2 mouse = GetMousePosition();
+                int gx, gy;
+                renderer.toGameCoords((int)mouse.x, (int)mouse.y, gx, gy);
+                game.registerHit(gx, gy);
+            }
+
+            if (IsWindowResized())
+                SetWindowSize(GetScreenWidth(), GetScreenWidth() * 3 / 4);
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+            game.draw();
+            EndDrawing();
         }
-
-        // Enforce 4:3 aspect ratio on resize — snap height to match width.
-        if (IsWindowResized())
-            SetWindowSize(GetScreenWidth(), GetScreenWidth() * 3 / 4);
-
-        BeginDrawing();
-        ClearBackground(BLACK);
-        game.draw();
-        EndDrawing();
     }
 
     CloseWindow();

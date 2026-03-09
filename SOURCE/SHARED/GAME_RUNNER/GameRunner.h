@@ -39,6 +39,7 @@ public:
     const ActiveSceneSection*      getActiveSceneSection()  const { return mActiveSceneSection.get(); }
     int                            getActiveLevelIndex()    const { return mActiveLevelIndex; }
     bool                           getDoDebugAction()       const { return mDoDebugAction; }
+    bool                           wantsToExitToLibrary()   const { return mWantsToExitToLibrary; }
 
 private:
     void loadSections();
@@ -50,8 +51,10 @@ private:
 
     static constexpr int k_TopBarHeight  = 20;
     static constexpr int k_NavBtnWidth   = 20;
+    static constexpr int k_HomeBtnWidth  = 20;
     static constexpr int k_DebugBtnWidth = 36;
     static constexpr int k_DebugBtnX     = 320 - k_NavBtnWidth - k_DebugBtnWidth;
+    static constexpr int k_HomeBtnX      = k_DebugBtnX - k_HomeBtnWidth;
 
     FileOperator&                        mFileOperator;
     GraphicsRenderer&                    mRenderer;
@@ -59,6 +62,7 @@ private:
     std::unique_ptr<SceneListSection>    mSceneListSection;
     std::unique_ptr<ActiveSceneSection>  mActiveSceneSection;
     std::vector<Level>                   mLevels;
-    int                                  mActiveLevelIndex = 0;
-    bool                                 mDoDebugAction    = false;
+    int                                  mActiveLevelIndex      = 0;
+    bool                                 mDoDebugAction         = false;
+    bool                                 mWantsToExitToLibrary  = false;
 };

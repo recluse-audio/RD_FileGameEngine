@@ -179,6 +179,8 @@ void GameRunner::drawTopBar()
     mRenderer.drawFilledRect(k_DebugBtnX, 0, k_DebugBtnWidth, k_TopBarHeight, dbgR, dbgG, dbgB, 240);
     mRenderer.drawLabel("debug", k_DebugBtnX + 2, 6);
 
+    mRenderer.drawButton("^", k_HomeBtnX, 0, k_HomeBtnWidth, k_TopBarHeight);
+
     if (mLevels.empty()) return;
 
     mRenderer.drawButton("<", 0, 0, k_NavBtnWidth, k_TopBarHeight);
@@ -225,6 +227,8 @@ void GameRunner::registerHit(int x, int y)
     {
         if (x >= 0 && x < k_NavBtnWidth)
             prevLevel();
+        else if (x >= k_HomeBtnX && x < k_HomeBtnX + k_HomeBtnWidth)
+            mWantsToExitToLibrary = true;
         else if (x >= k_DebugBtnX && x < k_DebugBtnX + k_DebugBtnWidth)
             toggleDebug();
         else if (x >= 320 - k_NavBtnWidth && x < 320)

@@ -14,12 +14,15 @@
  * Reads files from the local filesystem using std::ifstream.
  *
  * Paths are data-root-relative (e.g. "/LOCATIONS/DESK/MAIN/Desk_Full.json").
- * The "DATA" directory in the working directory is treated as the data root,
- * so a leading '/' is replaced with "DATA/".
+ * The data root defaults to "DATA" (relative to CWD) but can be overridden
+ * with an absolute path to point at any FILE_GAME's DATA directory.
  */
 class RaylibFileOperator : public FileOperator
 {
 public:
+    explicit RaylibFileOperator(std::string dataRoot = "DATA")
+        : mDataRoot(std::move(dataRoot)) {}
+
     std::string load(const std::string& path) override
     {
         std::string fullPath = sdPath(path);
@@ -61,10 +64,12 @@ public:
     }
 
 private:
-    static std::string sdPath(const std::string& path)
+    std::string mDataRoot;
+
+    std::string sdPath(const std::string& path) const
     {
         if (!path.empty() && path[0] == '/')
-            return "DATA" + path;
+            return mDataRoot + path;
         return path;
     }
 };
