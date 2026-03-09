@@ -6,6 +6,7 @@
 #include "GUISection.h"
 #include "../LEVEL/LevelScene.h"
 #include <string>
+#include <vector>
 
 /**
  * A GUISection that renders the currently selected scene's content.
@@ -21,6 +22,7 @@ public:
     using GUISection::GUISection;
 
     void setActiveScene(const LevelScene* scene);
+    void setShowZones(bool show) { mShowZones = show; }
 
     void draw(GraphicsRenderer& renderer, bool showLabel = false) const override;
 
@@ -28,6 +30,8 @@ public:
     std::string getMdPath()  const { return mMdPath; }
 
 private:
-    std::string mPngPath;
-    std::string mMdPath;
+    std::string              mPngPath;
+    std::string              mMdPath;
+    std::vector<SceneZone>   mZones;
+    bool                     mShowZones = false;
 };

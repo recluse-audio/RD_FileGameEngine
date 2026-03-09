@@ -30,6 +30,7 @@ public:
     void nextLevel();
     void prevLevel();
     void toggleDebug();
+    void toggleZones();
 
     const std::vector<GUISection>& getSections()            const { return mGUISections; }
     const std::vector<Level>&      getLevels()              const { return mLevels; }
@@ -51,10 +52,12 @@ private:
 
     static constexpr int k_TopBarHeight  = 20;
     static constexpr int k_NavBtnWidth   = 20;
-    static constexpr int k_HomeBtnWidth  = 20;
     static constexpr int k_DebugBtnWidth = 36;
     static constexpr int k_DebugBtnX     = 320 - k_NavBtnWidth - k_DebugBtnWidth;
-    static constexpr int k_HomeBtnX      = k_DebugBtnX - k_HomeBtnWidth;
+    static constexpr int k_ZonesBtnWidth = 20;
+    static constexpr int k_ZonesBtnX     = k_DebugBtnX - k_ZonesBtnWidth;
+    static constexpr int k_HomeBtnWidth  = 20;
+    static constexpr int k_HomeBtnX      = k_ZonesBtnX - k_HomeBtnWidth;
 
     FileOperator&                        mFileOperator;
     GraphicsRenderer&                    mRenderer;
@@ -64,5 +67,6 @@ private:
     std::vector<Level>                   mLevels;
     int                                  mActiveLevelIndex      = 0;
     bool                                 mDoDebugAction         = false;
+    bool                                 mShowZones             = false;
     bool                                 mWantsToExitToLibrary  = false;
 };

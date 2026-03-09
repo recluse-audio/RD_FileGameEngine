@@ -100,6 +100,10 @@ void GameRunner::loadLevels()
                     zone.w      = z.value("w",      0);
                     zone.h      = z.value("h",      0);
                     zone.target = z.value("target", "");
+                    if (z.contains("points") && z["points"].is_array())
+                        for (auto& pt : z["points"])
+                            if (pt.is_array() && pt.size() == 2)
+                                zone.points.push_back({ pt[0].get<int>(), pt[1].get<int>() });
                     scene.zones.push_back(std::move(zone));
                 }
             }
@@ -179,6 +183,12 @@ void GameRunner::drawTopBar()
     mRenderer.drawFilledRect(k_DebugBtnX, 0, k_DebugBtnWidth, k_TopBarHeight, dbgR, dbgG, dbgB, 240);
     mRenderer.drawLabel("debug", k_DebugBtnX + 2, 6);
 
+    int znR = mShowZones ? 60  : 40;
+    int znG = mShowZones ? 120 : 40;
+    int znB = mShowZones ? 200 : 40;
+    mRenderer.drawFilledRect(k_ZonesBtnX, 0, k_ZonesBtnWidth, k_TopBarHeight, znR, znG, znB, 240);
+    mRenderer.drawLabel("Z", k_ZonesBtnX + 6, 6);
+
     mRenderer.drawButton("^", k_HomeBtnX, 0, k_HomeBtnWidth, k_TopBarHeight);
 
     if (mLevels.empty()) return;
@@ -207,6 +217,13 @@ void GameRunner::toggleDebug()
     mDoDebugAction = !mDoDebugAction;
 }
 
+void GameRunner::toggleZones()
+{
+    mShowZones = !mShowZones;
+    if (mActiveSceneSection)
+        mActiveSceneSection->setShowZones(mShowZones);
+}
+
 void GameRunner::nextLevel()
 {
     if (mLevels.empty()) return;
@@ -229,6 +246,8 @@ void GameRunner::registerHit(int x, int y)
             prevLevel();
         else if (x >= k_HomeBtnX && x < k_HomeBtnX + k_HomeBtnWidth)
             mWantsToExitToLibrary = true;
+        else if (x >= k_ZonesBtnX && x < k_ZonesBtnX + k_ZonesBtnWidth)
+            toggleZones();
         else if (x >= k_DebugBtnX && x < k_DebugBtnX + k_DebugBtnWidth)
             toggleDebug();
         else if (x >= 320 - k_NavBtnWidth && x < 320)

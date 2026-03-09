@@ -4,6 +4,7 @@
 
 #pragma once
 #include <string>
+#include <utility>
 #include <vector>
 
 /**
@@ -21,6 +22,7 @@ struct SceneZone
     int         w      = 0;
     int         h      = 0;
     std::string target; // e.g. "/LEVELS/LEVEL_2/SCENE_1", or "" for no navigation
+    std::vector<std::pair<int,int>> points; // polygon vertices; empty = rect-only
 };
 
 /**
