@@ -46,6 +46,7 @@ if(BUILD_RAYLIB)
     add_executable(GameEngine_Raylib
         SOURCE/RAYLIB/main.cpp
         SOURCE/RAYLIB/RaylibGraphicsRenderer.cpp
+        SOURCE/RAYLIB/GameFolderBrowser.cpp
         SOURCE/SHARED/SCENE/nanosvg_impl.cpp
         ${ENGINE_SOURCES}
     )

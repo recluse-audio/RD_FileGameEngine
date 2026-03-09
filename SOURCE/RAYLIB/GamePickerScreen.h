@@ -3,21 +3,12 @@
  */
 
 #pragma once
+#include "GameFolderBrowser.h"
 #include "RaylibGameLibrary.h"
-#include "RaylibGraphicsRenderer.h"
 #include "raylib.h"
 #include <algorithm>
-#include <filesystem>
 #include <string>
 #include <vector>
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <shobjidl.h>
-#pragma comment(lib, "ole32.lib")
-#pragma comment(lib, "shell32.lib")
-#endif
 
 /**
  * Full-screen game-selection UI rendered with raw Raylib calls.
@@ -60,20 +51,20 @@ private:
     bool mFileMenuOpen   = false;
     std::string mBrowsedPath;
 
-    static constexpr int k_MenuH       = 14;
-    static constexpr int k_TitleY      = k_MenuH + 6;
-    static constexpr int k_ListY       = k_TitleY + 18;
-    static constexpr int k_ItemX       = 20;
-    static constexpr int k_ItemW       = 280;
-    static constexpr int k_ItemH       = 20;
-    static constexpr int k_ItemSpacing = 24;
-    static constexpr int k_FileMenuX   = 2;
+    static constexpr int k_MenuH        = 14;
+    static constexpr int k_TitleY       = k_MenuH + 6;
+    static constexpr int k_ListY        = k_TitleY + 18;
+    static constexpr int k_ItemX        = 20;
+    static constexpr int k_ItemW        = 280;
+    static constexpr int k_ItemH        = 20;
+    static constexpr int k_ItemSpacing  = 24;
+    static constexpr int k_FileMenuX    = 2;
     static constexpr int k_FileMenuBtnW = 36;
-    static constexpr int k_DropdownW   = 110;
-    static constexpr int k_DropdownH   = 14;
+    static constexpr int k_DropdownW    = 110;
+    static constexpr int k_DropdownH    = 14;
 
     float scale() const { return (float)GetScreenWidth() / 320.0f; }
-    int itemCount() const { return (int)mGames.size(); }
+    int   itemCount() const { return (int)mGames.size(); }
 
     Rectangle menuBarRect() const
     {
@@ -84,7 +75,8 @@ private:
     Rectangle fileButtonRect() const
     {
         float s = scale();
-        return { (float)(k_FileMenuX * s), s, (float)(k_FileMenuBtnW * s), (float)((k_MenuH - 2) * s) };
+        return { (float)(k_FileMenuX * s), s,
+                 (float)(k_FileMenuBtnW * s), (float)((k_MenuH - 2) * s) };
     }
 
     Rectangle openFolderItemRect() const
@@ -97,8 +89,10 @@ private:
     Rectangle itemRect(int i) const
     {
         float s = scale();
-        return { (float)(k_ItemX * s), (float)((k_ListY + i * k_ItemSpacing) * s),
-                 (float)(k_ItemW * s), (float)(k_ItemH * s) };
+        return { (float)(k_ItemX * s),
+                 (float)((k_ListY + i * k_ItemSpacing) * s),
+                 (float)(k_ItemW * s),
+                 (float)(k_ItemH * s) };
     }
 
     void handleInput()
@@ -112,14 +106,13 @@ private:
                 if (CheckCollisionPointRec(mouse, openFolderItemRect()))
                 {
                     mFileMenuOpen = false;
-                    browseForFolder();
+                    mBrowsedPath  = browseForGameFolder();
                     return;
                 }
-                // Click outside closes the menu
                 if (!CheckCollisionPointRec(mouse, fileButtonRect()))
                     mFileMenuOpen = false;
             }
-            return; // swallow all other input while menu is open
+            return;
         }
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
@@ -154,65 +147,12 @@ private:
         }
     }
 
-    void browseForFolder()
-    {
-#ifdef _WIN32
-        CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
-        IFileOpenDialog* pfd = nullptr;
-        if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr,
-                CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))))
-        {
-            DWORD opts = 0;
-            pfd->GetOptions(&opts);
-            pfd->SetOptions(opts | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST);
-            pfd->SetTitle(L"Select a FILE_GAME folder");
-
-            IShellItem* startDir = nullptr;
-            SHCreateItemFromParsingName(L"C:\\FILE_GAMES\\GAMES", nullptr,
-                                        IID_PPV_ARGS(&startDir));
-            if (startDir) { pfd->SetFolder(startDir); startDir->Release(); }
-
-            if (SUCCEEDED(pfd->Show(nullptr)))
-            {
-                IShellItem* result = nullptr;
-                if (SUCCEEDED(pfd->GetResult(&result)))
-                {
-                    PWSTR wpath = nullptr;
-                    if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &wpath)))
-                    {
-                        char buf[MAX_PATH] = {};
-                        WideCharToMultiByte(CP_UTF8, 0, wpath, -1, buf, MAX_PATH, nullptr, nullptr);
-                        CoTaskMemFree(wpath);
-
-                        namespace fs = std::filesystem;
-                        std::string chosen = buf;
-                        // Accept: chosen/DATA/LEVELS, chosen/LEVELS, or chosen directly
-                        for (auto candidate : { chosen + "\\DATA", chosen })
-                        {
-                            if (fs::is_directory(candidate + "\\LEVELS"))
-                            {
-                                mBrowsedPath = candidate;
-                                break;
-                            }
-                        }
-                    }
-                    result->Release();
-                }
-            }
-            pfd->Release();
-        }
-
-        CoUninitialize();
-#endif
-    }
-
     void draw()
     {
         float s   = scale();
-        int   fs  = std::max(6, (int)(8  * s));
-        int   mfs = std::max(4, (int)(7  * s));
-        int   sfs = std::max(4, (int)(6  * s));
+        int   fs  = std::max(6, (int)(8 * s));
+        int   mfs = std::max(4, (int)(7 * s));
+        int   sfs = std::max(4, (int)(6 * s));
 
         // ---- menu bar ----
         DrawRectangleRec(menuBarRect(), { 28, 28, 38, 255 });
@@ -238,7 +178,8 @@ private:
         // ---- game list ----
         if (itemCount() == 0)
         {
-            DrawText("No games found in:", (int)(20 * s), (int)(k_ListY * s),        fs,  RED);
+            DrawText("No games found in:",
+                     (int)(20 * s), (int)(k_ListY * s), fs, RED);
             DrawText(RaylibGameLibrary::k_DefaultRoot,
                      (int)(20 * s), (int)((k_ListY + 20) * s), sfs, GRAY);
             DrawText("Use  File > Open Game Folder  to browse.",
