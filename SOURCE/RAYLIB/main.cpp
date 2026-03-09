@@ -36,6 +36,7 @@ int main()
             break;
 
         // Run the selected game until the user clicks "home" or closes the window.
+        renderer.setDataRoot(dataPath);
         RaylibFileOperator fileOperator(dataPath);
         GameRunner         game(fileOperator, renderer);
 

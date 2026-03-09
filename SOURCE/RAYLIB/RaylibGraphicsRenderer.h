@@ -39,13 +39,18 @@ public:
     /** Convert a screen-space pixel position to 320x240 game coordinates. */
     void toGameCoords(int screenX, int screenY, int& gameX, int& gameY) const;
 
+    /** Set the game data root (absolute path to DATA directory).
+     *  Clears all cached textures and fonts so the new game's assets load fresh. */
+    void setDataRoot(const std::string& dataRoot);
+
 private:
+    std::string mDataRoot      = "DATA";
     std::string mCachedPath;
     Texture2D   mCachedTexture = {};
     std::unordered_map<std::string, Texture2D> mSvgCache;
     Font        mFont          = {};
 
-    static std::string sdPath(const std::string& path);
+    std::string sdPath(const std::string& path) const;
     void drawPng(const std::string& fullPath);
     void drawMarkdown(const std::string& fullPath, int startX, int startY, float textScale, bool applyScroll);
     void drawSvgAt(const std::string& fullPath, int x, int y, int targetW = 0, int targetH = 0);

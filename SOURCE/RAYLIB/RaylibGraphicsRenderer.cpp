@@ -59,10 +59,24 @@ RaylibGraphicsRenderer::~RaylibGraphicsRenderer()
         UnloadFont(mFont);
 }
 
-std::string RaylibGraphicsRenderer::sdPath(const std::string& path)
+void RaylibGraphicsRenderer::setDataRoot(const std::string& dataRoot)
+{
+    mDataRoot = dataRoot;
+
+    if (mCachedTexture.id > 0) { UnloadTexture(mCachedTexture); mCachedTexture = {}; }
+    mCachedPath.clear();
+
+    for (auto& [path, tex] : mSvgCache)
+        if (tex.id > 0) UnloadTexture(tex);
+    mSvgCache.clear();
+
+    if (mFont.texture.id > 0) { UnloadFont(mFont); mFont = {}; }
+}
+
+std::string RaylibGraphicsRenderer::sdPath(const std::string& path) const
 {
     if (!path.empty() && path[0] == '/')
-        return "DATA" + path;
+        return mDataRoot + path;
     return path;
 }
 
@@ -148,7 +162,7 @@ void RaylibGraphicsRenderer::drawFilledRect(int x, int y, int w, int h,
 void RaylibGraphicsRenderer::drawLabel(const std::string& text, int x, int y)
 {
     if (mFont.texture.id == 0)
-        mFont = LoadFontEx("DATA/GUI/OcrB2.ttf", 32, nullptr, 0);
+        mFont = LoadFontEx((mDataRoot + "/GUI/OcrB2.ttf").c_str(), 32, nullptr, 0);
 
     DrawTextEx(mFont, text.c_str(), { gx(x), gy(y) }, gp(8), 1.0f, WHITE);
 }
@@ -179,7 +193,7 @@ void RaylibGraphicsRenderer::endContentArea()
 void RaylibGraphicsRenderer::drawButton(const std::string& label, int x, int y, int w, int h)
 {
     if (mFont.texture.id == 0)
-        mFont = LoadFontEx("DATA/GUI/ASSETS/OcrB2.ttf", 32, nullptr, 0);
+        mFont = LoadFontEx((mDataRoot + "/GUI/OcrB2.ttf").c_str(), 32, nullptr, 0);
 
     float bx = gx(x), by = gy(y), bw = gp(w), bh = gp(h);
     DrawRectangle((int)bx, (int)by, (int)bw, (int)bh, {0, 0, 0, 220});
@@ -273,7 +287,7 @@ void RaylibGraphicsRenderer::drawMarkdown(const std::string& fullPath,
     if (!file.is_open()) return;
 
     if (mFont.texture.id == 0)
-        mFont = LoadFontEx("DATA/GUI/ASSETS/OcrB2.ttf", 32, nullptr, 0);
+        mFont = LoadFontEx((mDataRoot + "/GUI/OcrB2.ttf").c_str(), 32, nullptr, 0);
 
     float contentTop    = gy(15);
     float contentBottom = gy(225);
