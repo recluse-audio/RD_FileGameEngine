@@ -47,6 +47,7 @@ void GameRunner::loadSections()
         {
             mActiveSceneSection = std::make_unique<ActiveSceneSection>(id, label, x, y, width, height);
             mActiveSceneSection->setColor(c[0], c[1], c[2]);
+            mActiveSceneSection->setGameRunner(this);
         }
         else
         {
@@ -81,8 +82,9 @@ void GameRunner::loadLevels()
             if (sj.is_discarded()) continue;
 
             LevelScene scene;
-            scene.id   = sceneDir;
-            scene.name = sj.value("name", sceneDir);
+            scene.id       = sceneDir;
+            scene.name     = sj.value("name",     sceneDir);
+            scene.password = sj.value("password", "");
 
             std::string mdFile  = sj.value("md",  "");
             std::string pngFile = sj.value("png", "");
@@ -130,6 +132,21 @@ void GameRunner::loadInitialState()
         {
             mActiveLevelIndex = i;
             break;
+        }
+    }
+
+    if (state.contains("levels") && state["levels"].is_object())
+    {
+        for (auto& level : mLevels)
+        {
+            if (!state["levels"].contains(level.name)) continue;
+            const auto& ls = state["levels"][level.name];
+            if (!ls.contains("scenes") || !ls["scenes"].is_object()) continue;
+            for (auto& scene : level.scenes)
+            {
+                if (!ls["scenes"].contains(scene.name)) continue;
+                scene.isUnlocked = ls["scenes"][scene.name].value("isUnlocked", true);
+            }
         }
     }
 
@@ -189,6 +206,12 @@ void GameRunner::drawTopBar()
     mRenderer.drawFilledRect(k_ZonesBtnX, 0, k_ZonesBtnWidth, k_TopBarHeight, znR, znG, znB, 240);
     mRenderer.drawLabel("Z", k_ZonesBtnX + 6, 6);
 
+    int ovR = mShowOverlay ? 200 : 40;
+    int ovG = mShowOverlay ? 140 : 40;
+    int ovB = mShowOverlay ? 60  : 40;
+    mRenderer.drawFilledRect(k_OverlayBtnX, 0, k_OverlayBtnWidth, k_TopBarHeight, ovR, ovG, ovB, 240);
+    mRenderer.drawLabel("Ovr", k_OverlayBtnX + 2, 6);
+
     mRenderer.drawButton("^", k_HomeBtnX, 0, k_HomeBtnWidth, k_TopBarHeight);
 
     if (mLevels.empty()) return;
@@ -224,6 +247,13 @@ void GameRunner::toggleZones()
         mActiveSceneSection->setShowZones(mShowZones);
 }
 
+void GameRunner::toggleOverlay()
+{
+    mShowOverlay = !mShowOverlay;
+    if (mActiveSceneSection)
+        mActiveSceneSection->setShowOverlay(mShowOverlay);
+}
+
 void GameRunner::nextLevel()
 {
     if (mLevels.empty()) return;
@@ -238,6 +268,22 @@ void GameRunner::prevLevel()
     updateSceneList();
 }
 
+void GameRunner::submitPassword(const std::string& entry)
+{
+    if (mLevels.empty() || !mSceneListSection) return;
+
+    int idx = mSceneListSection->getSelectedIndex();
+    auto& scenes = mLevels[mActiveLevelIndex].scenes;
+    if (idx < 0 || idx >= (int)scenes.size()) return;
+
+    LevelScene& scene = scenes[idx];
+    if (entry == scene.password)
+    {
+        scene.isUnlocked = true;
+        updateActiveScene();
+    }
+}
+
 void GameRunner::registerHit(int x, int y)
 {
     if (y >= 0 && y < k_TopBarHeight)
@@ -248,6 +294,8 @@ void GameRunner::registerHit(int x, int y)
             mWantsToExitToLibrary = true;
         else if (x >= k_ZonesBtnX && x < k_ZonesBtnX + k_ZonesBtnWidth)
             toggleZones();
+        else if (x >= k_OverlayBtnX && x < k_OverlayBtnX + k_OverlayBtnWidth)
+            toggleOverlay();
         else if (x >= k_DebugBtnX && x < k_DebugBtnX + k_DebugBtnWidth)
             toggleDebug();
         else if (x >= 320 - k_NavBtnWidth && x < 320)
@@ -257,5 +305,9 @@ void GameRunner::registerHit(int x, int y)
     {
         mSceneListSection->registerHit(x, y);
         updateActiveScene();
+    }
+    else if (mActiveSceneSection && mActiveSceneSection->containsPoint(x, y))
+    {
+        mActiveSceneSection->registerHit(x, y);
     }
 }

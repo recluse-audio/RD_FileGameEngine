@@ -77,6 +77,12 @@ public:
     virtual void drawLabel(const std::string& text, int x, int y) {}
 
     /**
+     * Draw a text string centered within the given rectangle, with no background.
+     * Default is a no-op.
+     */
+    virtual void drawCenteredLabel(const std::string& text, int x, int y, int w, int h) {}
+
+    /**
      * Draw a closed polygon outline through the given game-space points.
      * Used by the zone display debug overlay. Default is a no-op.
      */

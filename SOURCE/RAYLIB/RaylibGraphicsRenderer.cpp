@@ -190,6 +190,20 @@ void RaylibGraphicsRenderer::endContentArea()
     EndScissorMode();
 }
 
+void RaylibGraphicsRenderer::drawCenteredLabel(const std::string& text, int x, int y, int w, int h)
+{
+    if (mFont.texture.id == 0)
+        mFont = LoadFontEx((mDataRoot + "/GUI/OcrB2.ttf").c_str(), 32, nullptr, 0);
+
+    float    bx = gx(x), by = gy(y), bw = gp(w), bh = gp(h);
+    float    fontSize = gp(9);
+    Vector2  textSize = MeasureTextEx(mFont, text.c_str(), fontSize, 1.0f);
+    DrawTextEx(mFont, text.c_str(),
+               { bx + (bw - textSize.x) / 2.0f,
+                 by + (bh - textSize.y) / 2.0f },
+               fontSize, 1.0f, WHITE);
+}
+
 void RaylibGraphicsRenderer::drawButton(const std::string& label, int x, int y, int w, int h)
 {
     if (mFont.texture.id == 0)

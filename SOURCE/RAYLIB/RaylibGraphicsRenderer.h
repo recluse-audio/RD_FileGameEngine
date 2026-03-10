@@ -32,6 +32,7 @@ public:
     void drawRect(int x, int y, int w, int h) override;
     void drawFilledRect(int x, int y, int w, int h, int r, int g, int b, int alpha) override;
     void drawLabel(const std::string& text, int x, int y) override;
+    void drawCenteredLabel(const std::string& text, int x, int y, int w, int h) override;
     void drawPolygon(const std::vector<std::pair<int, int>>& points) override;
     void beginContentArea(int x, int y, int w, int h) override;
     void endContentArea() override;

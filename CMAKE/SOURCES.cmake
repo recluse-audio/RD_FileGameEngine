@@ -9,6 +9,10 @@ set(ENGINE_SOURCES
     SOURCE/SHARED/GUI_SECTION/SceneListSection.h
     SOURCE/SHARED/GUI_SECTION/ActiveSceneSection.cpp
     SOURCE/SHARED/GUI_SECTION/ActiveSceneSection.h
+    SOURCE/SHARED/GUI_SECTION/CharSelectionBox.cpp
+    SOURCE/SHARED/GUI_SECTION/CharSelectionBox.h
+    SOURCE/SHARED/GUI_SECTION/PasswordEntryComponent.cpp
+    SOURCE/SHARED/GUI_SECTION/PasswordEntryComponent.h
     SOURCE/SHARED/GAME_RUNNER/GameRunner.cpp
     SOURCE/SHARED/GAME_RUNNER/GameRunner.h
     SOURCE/SHARED/GAME_STATE/GameStateComparison.cpp

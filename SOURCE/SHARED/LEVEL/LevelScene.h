@@ -34,9 +34,11 @@ struct SceneZone
  */
 struct LevelScene
 {
-    std::string           id;     // directory name, e.g. "SCENE_1"
-    std::string           name;   // friendly display name
-    std::string           md;     // data-root-relative path to .md file, or ""
-    std::string           png;    // data-root-relative path to .png file, or ""
+    std::string           id;         // directory name, e.g. "SCENE_1"
+    std::string           name;       // friendly display name
+    std::string           md;         // data-root-relative path to .md file, or ""
+    std::string           png;        // data-root-relative path to .png file, or ""
+    std::string           password;   // optional ASCII string, max 12 chars, or ""
+    bool                  isUnlocked = true; // false = show locked overlay; driven by game state
     std::vector<SceneZone> zones;
 };

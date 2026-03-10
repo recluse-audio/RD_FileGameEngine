@@ -4,6 +4,7 @@
 
 #pragma once
 #include <memory>
+#include <string>
 #include <vector>
 #include "../GUI_SECTION/GUISection.h"
 #include "../GUI_SECTION/SceneListSection.h"
@@ -31,6 +32,8 @@ public:
     void prevLevel();
     void toggleDebug();
     void toggleZones();
+    void toggleOverlay();
+    void submitPassword(const std::string& entry);
 
     const std::vector<GUISection>& getSections()            const { return mGUISections; }
     const std::vector<Level>&      getLevels()              const { return mLevels; }
@@ -56,8 +59,10 @@ private:
     static constexpr int k_DebugBtnX     = 320 - k_NavBtnWidth - k_DebugBtnWidth;
     static constexpr int k_ZonesBtnWidth = 20;
     static constexpr int k_ZonesBtnX     = k_DebugBtnX - k_ZonesBtnWidth;
-    static constexpr int k_HomeBtnWidth  = 20;
-    static constexpr int k_HomeBtnX      = k_ZonesBtnX - k_HomeBtnWidth;
+    static constexpr int k_HomeBtnWidth    = 20;
+    static constexpr int k_HomeBtnX       = k_ZonesBtnX - k_HomeBtnWidth;
+    static constexpr int k_OverlayBtnWidth = 28;
+    static constexpr int k_OverlayBtnX    = k_HomeBtnX - k_OverlayBtnWidth;
 
     FileOperator&                        mFileOperator;
     GraphicsRenderer&                    mRenderer;
@@ -68,5 +73,6 @@ private:
     int                                  mActiveLevelIndex      = 0;
     bool                                 mDoDebugAction         = false;
     bool                                 mShowZones             = false;
+    bool                                 mShowOverlay           = false;
     bool                                 mWantsToExitToLibrary  = false;
 };
