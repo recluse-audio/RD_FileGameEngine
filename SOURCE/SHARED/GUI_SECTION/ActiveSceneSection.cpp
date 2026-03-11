@@ -13,6 +13,16 @@ void ActiveSceneSection::registerHit(int x, int y)
         return;
     }
 
+    // TESTING ONLY - submits correct password directly, remove before final product
+    if (mSkipBtnW > 0
+        && x >= mSkipBtnX && x < mSkipBtnX + mSkipBtnW
+        && y >= mSkipBtnY && y < mSkipBtnY + mSkipBtnH)
+    {
+        if (mGameRunner)
+            mGameRunner->submitPassword(mPassword);
+        return;
+    }
+
     mPasswordEntry.registerHit(x, y);
 }
 
@@ -24,6 +34,7 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
     mPassword.clear();
     mPasswordEntry.clear();
     mIsLocked = false;
+    mMdScrollOffset = 0;
     if (!scene) return;
     mPngPath  = scene->png;
     mMdPath   = scene->md;
@@ -32,6 +43,7 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
     mPassword = scene->password;
 
     mSubmitBtnX = mSubmitBtnY = mSubmitBtnW = mSubmitBtnH = 0;
+    mSkipBtnX   = mSkipBtnY   = mSkipBtnW   = mSkipBtnH   = 0; // TESTING ONLY
 
     if (mIsLocked && !mPassword.empty())
     {
@@ -42,6 +54,8 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
         constexpr int submitW   = 40;
         constexpr int submitH   = 12;
         constexpr int submitGap = 6;
+        constexpr int skipW     = 30; // TESTING ONLY
+        constexpr int btnGap    = 4;  // TESTING ONLY
         const int numBoxes      = (int)mPassword.size();
         const int totalW        = numBoxes * boxSize + (numBoxes - 1) * boxGap;
         const int startX        = getX() + (getWidth() - totalW) / 2;
@@ -49,10 +63,17 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
         for (int i = 0; i < numBoxes; ++i)
             mPasswordEntry.addBox({ startX + i * (boxSize + boxGap), topY, boxSize, chevronH });
 
-        mSubmitBtnX = getX() + (getWidth() - submitW) / 2;
+        const int totalBtnsW    = submitW + btnGap + skipW; // TESTING ONLY
+        mSubmitBtnX = getX() + (getWidth() - totalBtnsW) / 2;
         mSubmitBtnY = topY + entryH + submitGap;
         mSubmitBtnW = submitW;
         mSubmitBtnH = submitH;
+
+        // TESTING ONLY - skip button bypasses password check
+        mSkipBtnX   = mSubmitBtnX + submitW + btnGap;
+        mSkipBtnY   = mSubmitBtnY;
+        mSkipBtnW   = skipW;
+        mSkipBtnH   = submitH;
     }
 }
 
@@ -65,7 +86,11 @@ void ActiveSceneSection::draw(GraphicsRenderer& renderer, bool showLabel) const
     if (!mPngPath.empty())
         renderer.drawImage(mPngPath, getX(), getY(), getWidth(), getHeight());
     else if (!mMdPath.empty())
+    {
+        renderer.setScrollOffset(mMdScrollOffset);
         renderer.drawText(mMdPath, getX(), getY());
+        renderer.setScrollOffset(0);
+    }
 
     if (mShowZones)
     {
@@ -92,11 +117,13 @@ void ActiveSceneSection::draw(GraphicsRenderer& renderer, bool showLabel) const
 
     if (mIsLocked)
     {
-        renderer.drawFilledRect(getX(), getY(), getWidth(), getHeight(), 0, 0, 0, 180);
+        renderer.drawFilledRect(getX(), getY(), getWidth(), getHeight(), 0, 0, 0, 255);
         renderer.drawCenteredLabel("LOCKED", getX(), getY(), getWidth(), getHeight() / 4);
 
         mPasswordEntry.draw(renderer);
         if (mSubmitBtnW > 0)
             renderer.drawButton("ENTER", mSubmitBtnX, mSubmitBtnY, mSubmitBtnW, mSubmitBtnH);
+        if (mSkipBtnW > 0) // TESTING ONLY
+            renderer.drawButton("SKIP", mSkipBtnX, mSkipBtnY, mSkipBtnW, mSkipBtnH);
     }
 }

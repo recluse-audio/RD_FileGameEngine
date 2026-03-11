@@ -6,6 +6,7 @@
 #include "GUISection.h"
 #include "PasswordEntryComponent.h"
 #include "../LEVEL/LevelScene.h"
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,7 @@ public:
     void setShowZones(bool show)    { mShowZones    = show; }
     void setShowOverlay(bool show)  { mShowOverlay  = show; }
     void setGameRunner(GameRunner* gr) { mGameRunner = gr; }
+    void scroll(int delta) { if (!mMdPath.empty()) mMdScrollOffset = std::max(0, mMdScrollOffset + delta); }
 
     void draw(GraphicsRenderer& renderer, bool showLabel = false) const override;
     void registerHit(int x, int y);
@@ -49,4 +51,10 @@ private:
     int                      mSubmitBtnY    = 0;
     int                      mSubmitBtnW    = 0;
     int                      mSubmitBtnH    = 0;
+    // TESTING ONLY - remove before final product
+    int                      mSkipBtnX      = 0;
+    int                      mSkipBtnY      = 0;
+    int                      mSkipBtnW      = 0;
+    int                      mSkipBtnH      = 0;
+    int                      mMdScrollOffset = 0;
 };

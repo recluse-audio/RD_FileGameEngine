@@ -137,8 +137,8 @@ void RaylibGraphicsRenderer::drawText(const std::string& path, int x, int y)
     }
     else
     {
-        // Section mode: render starting at the section origin.
-        drawMarkdown(full, x + 4, y + 4, 1.0f, false);
+        // Section mode: render starting at the section origin, offset by scroll.
+        drawMarkdown(full, x + 4, y + 4 - mScrollOffset, 1.0f, false);
     }
 }
 

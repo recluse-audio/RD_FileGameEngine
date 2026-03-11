@@ -13,7 +13,8 @@
  */
 struct Level
 {
-    std::string             id;     // directory name, e.g. "LEVEL_1"
-    std::string             name;   // display name, e.g. "Level 1"
+    std::string             id;                 // directory name, e.g. "LEVEL_1"
+    std::string             name;               // display name, e.g. "Level 1"
+    bool                    isUnlocked = true;
     std::vector<LevelScene> scenes;
 };

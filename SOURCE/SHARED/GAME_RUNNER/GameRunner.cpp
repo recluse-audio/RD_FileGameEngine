@@ -2,6 +2,9 @@
 #include "../FILE_OPERATOR/FileOperator.h"
 #include "../GRAPHICS_RENDERER/GraphicsRenderer.h"
 #include <nlohmann/json.hpp>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 
 GameRunner::GameRunner(FileOperator& fileOperator, GraphicsRenderer& renderer)
 : mFileOperator(fileOperator)
@@ -122,49 +125,7 @@ void GameRunner::loadInitialState()
     std::string stateJson = mFileOperator.load("/GAME_STATE/Default_Game_State.json");
     nlohmann::json state = nlohmann::json::parse(stateJson, nullptr, false);
     if (state.is_discarded()) { updateSceneList(); return; }
-
-    std::string currentLevel = state.value("current_level", "");
-    std::string currentScene = state.value("current_scene", "");
-
-    for (int i = 0; i < (int)mLevels.size(); ++i)
-    {
-        if (mLevels[i].name == currentLevel)
-        {
-            mActiveLevelIndex = i;
-            break;
-        }
-    }
-
-    if (state.contains("levels") && state["levels"].is_object())
-    {
-        for (auto& level : mLevels)
-        {
-            if (!state["levels"].contains(level.name)) continue;
-            const auto& ls = state["levels"][level.name];
-            if (!ls.contains("scenes") || !ls["scenes"].is_object()) continue;
-            for (auto& scene : level.scenes)
-            {
-                if (!ls["scenes"].contains(scene.name)) continue;
-                scene.isUnlocked = ls["scenes"][scene.name].value("isUnlocked", true);
-            }
-        }
-    }
-
-    updateSceneList();
-
-    if (!mSceneListSection || currentScene.empty()) return;
-
-    const auto& names = mSceneListSection->getScenes();
-    for (int i = 0; i < (int)names.size(); ++i)
-    {
-        if (names[i] == currentScene)
-        {
-            mSceneListSection->setSelectedIndex(i);
-            break;
-        }
-    }
-
-    updateActiveScene();
+    applyStateJson(state);
 }
 
 void GameRunner::updateSceneList()
@@ -218,7 +179,11 @@ void GameRunner::drawTopBar()
 
     mRenderer.drawButton("<", 0, 0, k_NavBtnWidth, k_TopBarHeight);
     mRenderer.drawButton(">", 320 - k_NavBtnWidth, 0, k_NavBtnWidth, k_TopBarHeight);
-    mRenderer.drawLabel(mLevels[mActiveLevelIndex].name, k_NavBtnWidth + 4, 6);
+
+    mRenderer.drawButton("Sv", k_SaveBtnX, 0, k_SaveBtnWidth, k_TopBarHeight);
+    mRenderer.drawButton("Ld", k_LoadBtnX, 0, k_LoadBtnWidth, k_TopBarHeight);
+
+    mRenderer.drawLabel(mLevels[mActiveLevelIndex].name, k_LoadBtnX + k_LoadBtnWidth + 4, 6);
 }
 
 void GameRunner::draw()
@@ -284,12 +249,121 @@ void GameRunner::submitPassword(const std::string& entry)
     }
 }
 
+nlohmann::json GameRunner::buildStateJson() const
+{
+    nlohmann::json j;
+    j["game_id"] = mGameId;
+
+    if (!mLevels.empty())
+    {
+        j["current_level"] = mLevels[mActiveLevelIndex].name;
+        j["current_scene"] = "";
+        if (mSceneListSection)
+        {
+            int idx = mSceneListSection->getSelectedIndex();
+            const auto& scenes = mLevels[mActiveLevelIndex].scenes;
+            if (idx >= 0 && idx < (int)scenes.size())
+                j["current_scene"] = scenes[idx].name;
+        }
+    }
+
+    for (const auto& level : mLevels)
+    {
+        j["levels"][level.name]["isUnlocked"] = level.isUnlocked;
+        for (const auto& scene : level.scenes)
+            j["levels"][level.name]["scenes"][scene.name]["isUnlocked"] = scene.isUnlocked;
+    }
+
+    return j;
+}
+
+void GameRunner::applyStateJson(const nlohmann::json& state)
+{
+    if (state.contains("levels") && state["levels"].is_object())
+    {
+        for (auto& level : mLevels)
+        {
+            if (!state["levels"].contains(level.name)) continue;
+            const auto& ls = state["levels"][level.name];
+            level.isUnlocked = ls.value("isUnlocked", true);
+            if (!ls.contains("scenes") || !ls["scenes"].is_object()) continue;
+            for (auto& scene : level.scenes)
+            {
+                if (!ls["scenes"].contains(scene.name)) continue;
+                scene.isUnlocked = ls["scenes"][scene.name].value("isUnlocked", true);
+            }
+        }
+    }
+
+    std::string currentLevel = state.value("current_level", "");
+    std::string currentScene = state.value("current_scene", "");
+
+    mActiveLevelIndex = 0;
+    for (int i = 0; i < (int)mLevels.size(); ++i)
+    {
+        if (mLevels[i].name == currentLevel) { mActiveLevelIndex = i; break; }
+    }
+
+    updateSceneList();
+
+    if (!mSceneListSection || currentScene.empty()) return;
+
+    const auto& names = mSceneListSection->getScenes();
+    for (int i = 0; i < (int)names.size(); ++i)
+    {
+        if (names[i] == currentScene) { mSceneListSection->setSelectedIndex(i); break; }
+    }
+
+    updateActiveScene();
+}
+
+std::string GameRunner::savePath() const
+{
+    return mSaveDir + "\\" + mGameId + "_save.json";
+}
+
+void GameRunner::saveGame()
+{
+    if (mGameId.empty()) return;
+    namespace fs = std::filesystem;
+    fs::create_directories(fs::path(mSaveDir));
+    std::ofstream out(savePath());
+    if (out.is_open())
+        out << buildStateJson().dump(2);
+}
+
+bool GameRunner::loadGameFromPath(const std::string& path)
+{
+    std::ifstream in(path);
+    if (!in.is_open()) return false;
+
+    std::stringstream buf;
+    buf << in.rdbuf();
+
+    nlohmann::json state = nlohmann::json::parse(buf.str(), nullptr, false);
+    if (state.is_discarded()) return false;
+    if (state.value("game_id", "") != mGameId) return false;
+
+    applyStateJson(state);
+    return true;
+}
+
+void GameRunner::registerScroll(int delta)
+{
+    if (mActiveSceneSection)
+        mActiveSceneSection->scroll(delta);
+}
+
 void GameRunner::registerHit(int x, int y)
 {
     if (y >= 0 && y < k_TopBarHeight)
     {
         if (x >= 0 && x < k_NavBtnWidth)
             prevLevel();
+        else if (x >= k_SaveBtnX && x < k_SaveBtnX + k_SaveBtnWidth)
+            saveGame();
+        else if (x >= k_LoadBtnX && x < k_LoadBtnX + k_LoadBtnWidth)
+            mWantsToLoadGame = true;
         else if (x >= k_HomeBtnX && x < k_HomeBtnX + k_HomeBtnWidth)
             mWantsToExitToLibrary = true;
         else if (x >= k_ZonesBtnX && x < k_ZonesBtnX + k_ZonesBtnWidth)

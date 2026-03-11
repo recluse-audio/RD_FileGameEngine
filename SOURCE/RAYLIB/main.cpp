@@ -8,7 +8,9 @@
 #include "RaylibGameLibrary.h"
 #include "GamePickerScreen.h"
 #include "RaylibGraphicsRenderer.h"
+#include "SaveFileBrowser.h"
 #include "../SHARED/GAME_RUNNER/GameRunner.h"
+#include <filesystem>
 
 static const int SCALE    = 2;
 static const int SCREEN_W = 320 * SCALE;
@@ -39,6 +41,7 @@ int main()
         renderer.setDataRoot(dataPath);
         RaylibFileOperator fileOperator(dataPath);
         GameRunner         game(fileOperator, renderer);
+        game.setGameId(std::filesystem::path(dataPath).filename().string());
 
         while (!WindowShouldClose() && !game.wantsToExitToLibrary())
         {
@@ -48,6 +51,18 @@ int main()
                 int gx, gy;
                 renderer.toGameCoords((int)mouse.x, (int)mouse.y, gx, gy);
                 game.registerHit(gx, gy);
+            }
+
+            float wheel = GetMouseWheelMove();
+            if (wheel != 0.0f)
+                game.registerScroll((int)(-wheel * 10));
+
+            if (game.wantsToLoadGame())
+            {
+                game.clearLoadGameFlag();
+                std::string path = browseForSaveFile(game.getGameId(), game.getSaveDir());
+                if (!path.empty())
+                    game.loadGameFromPath(path);
             }
 
             if (IsWindowResized())
