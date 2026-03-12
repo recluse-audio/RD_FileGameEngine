@@ -37,4 +37,24 @@ public:
      */
     virtual std::vector<std::string> listDirectory(const std::string& dirPath) = 0;
 
+    /**
+     * Write content to an absolute path that bypasses any data-root prefix.
+     * Used for save files that live outside the game data root (e.g. FILE_GAME_SAVES).
+     * Default implementation delegates to writeToFile, which is correct for platforms
+     * whose writeToFile already handles absolute paths (e.g. Raylib on Windows).
+     */
+    virtual void writeAbsolute(const std::string& path, const std::string& content)
+    {
+        writeToFile(path, content);
+    }
+
+    /**
+     * Read a file at an absolute path that bypasses any data-root prefix.
+     * Default implementation delegates to load.
+     */
+    virtual std::string loadAbsolute(const std::string& path)
+    {
+        return load(path);
+    }
+
 };

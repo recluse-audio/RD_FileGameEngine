@@ -47,12 +47,12 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
 
     if (mIsLocked && !mPassword.empty())
     {
-        constexpr int boxSize   = 12;
-        constexpr int boxGap    = 4;
-        constexpr int chevronH  = 6;
+        constexpr int boxSize   = 24;
+        constexpr int boxGap    = 6;
+        constexpr int chevronH  = 12;
         constexpr int entryH    = chevronH + boxSize + chevronH;
         constexpr int submitW   = 40;
-        constexpr int submitH   = 12;
+        constexpr int submitH   = 16;
         constexpr int submitGap = 6;
         constexpr int skipW     = 30; // TESTING ONLY
         constexpr int btnGap    = 4;  // TESTING ONLY

@@ -65,9 +65,9 @@
     #endif
 #endif
 
-#define NLOHMANN_JSON_VERSION_MAJOR 3   // NOLINT(modernize-macro-to-enum)
-#define NLOHMANN_JSON_VERSION_MINOR 11  // NOLINT(modernize-macro-to-enum)
-#define NLOHMANN_JSON_VERSION_PATCH 3   // NOLINT(modernize-macro-to-enum)
+#define NLOHMANN_JSON_VERSION_MAJOR 3
+#define NLOHMANN_JSON_VERSION_MINOR 11
+#define NLOHMANN_JSON_VERSION_PATCH 3
 
 #ifndef JSON_DIAGNOSTICS
     #define JSON_DIAGNOSTICS 0

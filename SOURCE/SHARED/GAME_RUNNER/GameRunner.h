@@ -107,6 +107,6 @@ private:
     bool                                 mShowOverlay           = false;
     bool                                 mWantsToExitToLibrary  = false;
     std::string                          mGameId;
-    std::string                          mSaveDir               = "C:\\FILE_GAME_SAVES";
+    std::string                          mSaveDir               = "C:/FILE_GAME_SAVES";
     bool                                 mWantsToLoadGame       = false;
 };

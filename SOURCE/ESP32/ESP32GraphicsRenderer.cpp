@@ -1,15 +1,17 @@
 #include "ESP32GraphicsRenderer.h"
-#include "ESP32FileOperator.h"
 #include <PNGdec.h>
 #include <SD.h>
 
 // ---------------------------------------------------------------------------
-// PNG decode state — persistent allocations, not stack variables
+// PNG decode state — global to avoid large stack allocations.
+// sPngOriginX/Y are set before each decode to position the image on screen.
 
 static TFT_eSPI*  sDrawTft    = nullptr;
 static PNG        sPng;
 static File       sPngFile;
 static uint16_t   sLineBuffer[320];
+static int        sPngOriginX = 0;
+static int        sPngOriginY = 0;
 
 static void* pngOpen(const char* filename, int32_t* size)
 {
@@ -42,7 +44,8 @@ static int pngDraw(PNGDRAW* pDraw)
 {
     if (!sDrawTft || (int)pDraw->iWidth > 320) return 0;
     sPng.getLineAsRGB565(pDraw, sLineBuffer, PNG_RGB565_BIG_ENDIAN, 0xFFFFFFFF);
-    sDrawTft->pushImage(0, (int)pDraw->y, (int)pDraw->iWidth, 1, sLineBuffer);
+    sDrawTft->pushImage(sPngOriginX, sPngOriginY + (int)pDraw->y,
+                        (int)pDraw->iWidth, 1, sLineBuffer);
     return 1;
 }
 
@@ -66,14 +69,35 @@ ESP32GraphicsRenderer::ESP32GraphicsRenderer(TFT_eSPI& tft)
     sDrawTft = &tft;
 }
 
-void ESP32GraphicsRenderer::drawImage(const std::string& path)
+std::string ESP32GraphicsRenderer::sdPath(const std::string& path) const
 {
-    std::string full = resolveImagePath(ESP32FileOperator::sdPath(path));
-    Serial.printf("[IMG] drawImage: %s\n", full.c_str());
+    if (!path.empty() && path[0] == '/')
+        return mDataRoot + path;
+    return path;
+}
 
-    mTft.fillScreen(TFT_BLACK);
+// ---------------------------------------------------------------------------
 
-    int rc = sPng.open(full.c_str(), pngOpen, pngClose, pngRead, pngSeek, pngDraw);
+void ESP32GraphicsRenderer::beginContentArea(int x, int y, int w, int h)
+{
+    // vpDatum=false keeps all draw coordinates in absolute screen space.
+    mTft.setViewport(x, y, w, h, false);
+}
+
+void ESP32GraphicsRenderer::endContentArea()
+{
+    mTft.resetViewport();
+}
+
+// ---------------------------------------------------------------------------
+
+void ESP32GraphicsRenderer::drawPng(const std::string& fullPath, int originX, int originY)
+{
+    Serial.printf("[IMG] drawPng: %s  origin=(%d,%d)\n", fullPath.c_str(), originX, originY);
+    sPngOriginX = originX;
+    sPngOriginY = originY;
+
+    int rc = sPng.open(fullPath.c_str(), pngOpen, pngClose, pngRead, pngSeek, pngDraw);
     Serial.printf("[IMG] sPng.open rc=%d\n", rc);
 
     if (rc == PNG_SUCCESS)
@@ -86,13 +110,27 @@ void ESP32GraphicsRenderer::drawImage(const std::string& path)
     }
 }
 
+void ESP32GraphicsRenderer::drawImage(const std::string& path)
+{
+    mTft.fillScreen(TFT_BLACK);
+    drawPng(resolveImagePath(sdPath(path)), 0, 0);
+}
+
+void ESP32GraphicsRenderer::drawImage(const std::string& path, int x, int y, int /*w*/, int /*h*/)
+{
+    // Draw the image at (x, y); the active viewport (set by beginContentArea) clips it.
+    drawPng(resolveImagePath(sdPath(path)), x, y);
+}
+
+// ---------------------------------------------------------------------------
+
 void ESP32GraphicsRenderer::drawText(const std::string& path, int x, int y)
 {
-    File file = SD.open(ESP32FileOperator::sdPath(path).c_str(), FILE_READ);
+    File file = SD.open(sdPath(path).c_str(), FILE_READ);
     if (!file) return;
 
-    mTft.setTextWrap(true);
-    int    curY = y;
+    mTft.setTextWrap(false);
+    int curY = y - mScrollOffset;
     String line;
 
     while (file.available())
@@ -106,18 +144,27 @@ void ESP32GraphicsRenderer::drawText(const std::string& path, int x, int y)
 
         uint8_t sz    = (hashes == 1) ? 3 : (hashes == 2) ? 2 : 1;
         int     lineH = sz * 8 + 4;
-        mTft.setTextSize(sz);
-        mTft.setTextColor(hashes > 0 ? TFT_WHITE : TFT_LIGHTGREY, TFT_BLACK);
-        mTft.drawString(display, x, curY);
+
+        if (curY + lineH > y && curY < y + 240) // skip lines outside the visible band
+        {
+            mTft.setTextSize(sz);
+            mTft.setTextColor(hashes > 0 ? TFT_WHITE : TFT_LIGHTGREY, TFT_BLACK);
+            mTft.drawString(display, x + 4, curY + 4);
+        }
+
         curY += lineH;
         line = "";
     }
     file.close();
 }
 
+// ---------------------------------------------------------------------------
+
 void ESP32GraphicsRenderer::drawSVG(const std::string& /*path*/,
                                     int /*x*/, int /*y*/,
                                     int /*w*/, int /*h*/) {}
+
+// ---------------------------------------------------------------------------
 
 void ESP32GraphicsRenderer::drawButton(const std::string& label, int x, int y, int w, int h)
 {
@@ -128,4 +175,30 @@ void ESP32GraphicsRenderer::drawButton(const std::string& label, int x, int y, i
     int textX = x + (w - (int)label.size() * 6) / 2;
     int textY = y + (h - 8) / 2;
     mTft.drawString(label.c_str(), textX, textY);
+}
+
+// ---------------------------------------------------------------------------
+
+void ESP32GraphicsRenderer::drawFilledRect(int x, int y, int w, int h,
+                                           int r, int g, int b, int /*alpha*/)
+{
+    mTft.fillRect(x, y, w, h, mTft.color565(r, g, b));
+}
+
+void ESP32GraphicsRenderer::drawLabel(const std::string& text, int x, int y)
+{
+    mTft.setTextSize(1);
+    mTft.setTextColor(TFT_WHITE, TFT_BLACK);
+    mTft.drawString(text.c_str(), x, y);
+}
+
+void ESP32GraphicsRenderer::drawCenteredLabel(const std::string& text,
+                                              int x, int y, int w, int h)
+{
+    int textW = (int)text.size() * 6; // size-1 font: ~6px per char
+    int textX = x + (w - textW) / 2;
+    int textY = y + (h - 8) / 2;     // size-1 font: 8px tall
+    mTft.setTextSize(1);
+    mTft.setTextColor(TFT_WHITE, TFT_BLACK);
+    mTft.drawString(text.c_str(), textX, textY);
 }

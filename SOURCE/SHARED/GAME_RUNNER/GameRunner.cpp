@@ -2,9 +2,6 @@
 #include "../FILE_OPERATOR/FileOperator.h"
 #include "../GRAPHICS_RENDERER/GraphicsRenderer.h"
 #include <nlohmann/json.hpp>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
 
 GameRunner::GameRunner(FileOperator& fileOperator, GraphicsRenderer& renderer)
 : mFileOperator(fileOperator)
@@ -319,28 +316,21 @@ void GameRunner::applyStateJson(const nlohmann::json& state)
 
 std::string GameRunner::savePath() const
 {
-    return mSaveDir + "\\" + mGameId + "_save.json";
+    return mSaveDir + "/" + mGameId + "_save.json";
 }
 
 void GameRunner::saveGame()
 {
     if (mGameId.empty()) return;
-    namespace fs = std::filesystem;
-    fs::create_directories(fs::path(mSaveDir));
-    std::ofstream out(savePath());
-    if (out.is_open())
-        out << buildStateJson().dump(2);
+    mFileOperator.writeAbsolute(savePath(), buildStateJson().dump(2));
 }
 
 bool GameRunner::loadGameFromPath(const std::string& path)
 {
-    std::ifstream in(path);
-    if (!in.is_open()) return false;
+    std::string content = mFileOperator.loadAbsolute(path);
+    if (content.empty()) return false;
 
-    std::stringstream buf;
-    buf << in.rdbuf();
-
-    nlohmann::json state = nlohmann::json::parse(buf.str(), nullptr, false);
+    nlohmann::json state = nlohmann::json::parse(content, nullptr, false);
     if (state.is_discarded()) return false;
     if (state.value("game_id", "") != mGameId) return false;
 
