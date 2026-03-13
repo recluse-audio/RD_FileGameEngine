@@ -1,29 +1,14 @@
 #include "ActiveSceneSection.h"
+#include "PasswordEntryOverlay.h"
+#include "MultipleChoiceOverlay.h"
 #include "../GRAPHICS_RENDERER/GraphicsRenderer.h"
 #include "../GAME_RUNNER/GameRunner.h"
+#include <array>
 
 void ActiveSceneSection::registerHit(int x, int y)
 {
-    if (mSubmitBtnW > 0
-        && x >= mSubmitBtnX && x < mSubmitBtnX + mSubmitBtnW
-        && y >= mSubmitBtnY && y < mSubmitBtnY + mSubmitBtnH)
-    {
-        if (mGameRunner)
-            mGameRunner->submitPassword(mPasswordEntry.getEntryString());
-        return;
-    }
-
-    // TESTING ONLY - submits correct password directly, remove before final product
-    if (mSkipBtnW > 0
-        && x >= mSkipBtnX && x < mSkipBtnX + mSkipBtnW
-        && y >= mSkipBtnY && y < mSkipBtnY + mSkipBtnH)
-    {
-        if (mGameRunner)
-            mGameRunner->submitPassword(mPassword);
-        return;
-    }
-
-    mPasswordEntry.registerHit(x, y);
+    if (mOverlay)
+        mOverlay->registerHit(x, y);
 }
 
 void ActiveSceneSection::setActiveScene(const LevelScene* scene)
@@ -31,49 +16,26 @@ void ActiveSceneSection::setActiveScene(const LevelScene* scene)
     mPngPath.clear();
     mMdPath.clear();
     mZones.clear();
-    mPassword.clear();
-    mPasswordEntry.clear();
-    mIsLocked = false;
+    mOverlay.reset();
     mMdScrollOffset = 0;
     if (!scene) return;
-    mPngPath  = scene->png;
-    mMdPath   = scene->md;
-    mZones    = scene->zones;
-    mIsLocked = !scene->isUnlocked;
-    mPassword = scene->password;
 
-    mSubmitBtnX = mSubmitBtnY = mSubmitBtnW = mSubmitBtnH = 0;
-    mSkipBtnX   = mSkipBtnY   = mSkipBtnW   = mSkipBtnH   = 0; // TESTING ONLY
+    mPngPath = scene->png;
+    mMdPath  = scene->md;
+    mZones   = scene->zones;
 
-    if (mIsLocked && !mPassword.empty())
+    if (!scene->isUnlocked && !scene->password.empty())
     {
-        constexpr int boxSize   = 24;
-        constexpr int boxGap    = 6;
-        constexpr int chevronH  = 12;
-        constexpr int entryH    = chevronH + boxSize + chevronH;
-        constexpr int submitW   = 40;
-        constexpr int submitH   = 16;
-        constexpr int submitGap = 6;
-        constexpr int skipW     = 30; // TESTING ONLY
-        constexpr int btnGap    = 4;  // TESTING ONLY
-        const int numBoxes      = (int)mPassword.size();
-        const int totalW        = numBoxes * boxSize + (numBoxes - 1) * boxGap;
-        const int startX        = getX() + (getWidth() - totalW) / 2;
-        const int topY          = getY() + getHeight() / 4 + 8;
-        for (int i = 0; i < numBoxes; ++i)
-            mPasswordEntry.addBox({ startX + i * (boxSize + boxGap), topY, boxSize, chevronH });
-
-        const int totalBtnsW    = submitW + btnGap + skipW; // TESTING ONLY
-        mSubmitBtnX = getX() + (getWidth() - totalBtnsW) / 2;
-        mSubmitBtnY = topY + entryH + submitGap;
-        mSubmitBtnW = submitW;
-        mSubmitBtnH = submitH;
-
-        // TESTING ONLY - skip button bypasses password check
-        mSkipBtnX   = mSubmitBtnX + submitW + btnGap;
-        mSkipBtnY   = mSubmitBtnY;
-        mSkipBtnW   = skipW;
-        mSkipBtnH   = submitH;
+        mOverlay = std::make_unique<PasswordEntryOverlay>(
+            getX(), getY(), getWidth(), getHeight(), scene->password, mGameRunner);
+    }
+    else if (scene->multipleChoice.size() == MultipleChoiceOverlay::NUM_CHOICES)
+    {
+        std::array<std::string, MultipleChoiceOverlay::NUM_CHOICES> choices;
+        for (int i = 0; i < MultipleChoiceOverlay::NUM_CHOICES; ++i)
+            choices[i] = scene->multipleChoice[i];
+        mOverlay = std::make_unique<MultipleChoiceOverlay>(
+            getX(), getY(), getWidth(), getHeight(), choices, mGameRunner);
     }
 }
 
@@ -115,15 +77,6 @@ void ActiveSceneSection::draw(GraphicsRenderer& renderer, bool showLabel) const
         renderer.drawLabel("Overlay", getX() + 4, getY() + 4);
     }
 
-    if (mIsLocked)
-    {
-        renderer.drawFilledRect(getX(), getY(), getWidth(), getHeight(), 0, 0, 0, 255);
-        renderer.drawCenteredLabel("LOCKED", getX(), getY(), getWidth(), getHeight() / 4);
-
-        mPasswordEntry.draw(renderer);
-        if (mSubmitBtnW > 0)
-            renderer.drawButton("ENTER", mSubmitBtnX, mSubmitBtnY, mSubmitBtnW, mSubmitBtnH);
-        if (mSkipBtnW > 0) // TESTING ONLY
-            renderer.drawButton("SKIP", mSkipBtnX, mSkipBtnY, mSkipBtnW, mSkipBtnH);
-    }
+    if (mOverlay)
+        mOverlay->draw(renderer);
 }

@@ -4,9 +4,10 @@
 
 #pragma once
 #include "GUISection.h"
-#include "PasswordEntryComponent.h"
+#include "ActiveSceneOverlay.h"
 #include "../LEVEL/LevelScene.h"
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,23 +39,12 @@ public:
     std::string getMdPath()  const { return mMdPath; }
 
 private:
-    std::string              mPngPath;
-    std::string              mMdPath;
-    std::vector<SceneZone>   mZones;
-    bool                          mShowZones   = false;
-    bool                          mShowOverlay = false;
-    bool                          mIsLocked    = false;
-    std::string              mPassword;
-    PasswordEntryComponent   mPasswordEntry;
-    GameRunner*              mGameRunner    = nullptr;
-    int                      mSubmitBtnX    = 0;
-    int                      mSubmitBtnY    = 0;
-    int                      mSubmitBtnW    = 0;
-    int                      mSubmitBtnH    = 0;
-    // TESTING ONLY - remove before final product
-    int                      mSkipBtnX      = 0;
-    int                      mSkipBtnY      = 0;
-    int                      mSkipBtnW      = 0;
-    int                      mSkipBtnH      = 0;
-    int                      mMdScrollOffset = 0;
+    std::string                        mPngPath;
+    std::string                        mMdPath;
+    std::vector<SceneZone>             mZones;
+    bool                               mShowZones      = false;
+    bool                               mShowOverlay    = false;
+    GameRunner*                        mGameRunner     = nullptr;
+    std::unique_ptr<ActiveSceneOverlay> mOverlay;
+    int                                mMdScrollOffset = 0;
 };

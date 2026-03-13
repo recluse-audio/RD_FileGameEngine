@@ -86,6 +86,11 @@ void GameRunner::loadLevels()
             scene.name     = sj.value("name",     sceneDir);
             scene.password = sj.value("password", "");
 
+            if (sj.contains("multipleChoice") && sj["multipleChoice"].is_array())
+                for (const auto& c : sj["multipleChoice"])
+                    if (c.is_string())
+                        scene.multipleChoice.push_back(c.get<std::string>());
+
             std::string mdFile  = sj.value("md",  "");
             std::string pngFile = sj.value("png", "");
             if (!mdFile.empty())  scene.md  = scenePath + "/" + mdFile;

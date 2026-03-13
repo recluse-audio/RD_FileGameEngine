@@ -1,10 +1,12 @@
 #include "ESP32GraphicsRenderer.h"
 #include <PNGdec.h>
 #include <SD.h>
+#include <algorithm>
 
 // ---------------------------------------------------------------------------
 // PNG decode state — global to avoid large stack allocations.
 // sPngOriginX/Y are set before each decode to position the image on screen.
+// sOutW/H, sSrcW/H, sOutOffX/Y are used for nearest-neighbour scaling.
 
 static TFT_eSPI*  sDrawTft    = nullptr;
 static PNG        sPng;
@@ -12,6 +14,13 @@ static File       sPngFile;
 static uint16_t   sLineBuffer[320];
 static int        sPngOriginX = 0;
 static int        sPngOriginY = 0;
+static int        sSrcW       = 320;
+static int        sSrcH       = 240;
+static int        sOutW       = 320;
+static int        sOutH       = 240;
+static int        sOutOffX    = 0;
+static int        sOutOffY    = 0;
+static int        sLastOutY   = -1;
 
 static void* pngOpen(const char* filename, int32_t* size)
 {
@@ -43,9 +52,22 @@ static int32_t pngSeek(PNGFILE* /*handle*/, int32_t pos)
 static int pngDraw(PNGDRAW* pDraw)
 {
     if (!sDrawTft || (int)pDraw->iWidth > 320) return 0;
+
+    // Map source row → output row (nearest-neighbour vertical)
+    int outY = (int)pDraw->y * sOutH / sSrcH;
+    if (outY == sLastOutY) return 1;  // skip duplicate source rows
+    sLastOutY = outY;
+
     sPng.getLineAsRGB565(pDraw, sLineBuffer, PNG_RGB565_BIG_ENDIAN, 0xFFFFFFFF);
-    sDrawTft->pushImage(sPngOriginX, sPngOriginY + (int)pDraw->y,
-                        (int)pDraw->iWidth, 1, sLineBuffer);
+
+    // Nearest-neighbour horizontal downsample in-place.
+    // srcX = i * sSrcW / sOutW >= i when sSrcW >= sOutW, so reads never
+    // overtake writes and no second buffer is needed.
+    for (int i = 0; i < sOutW; i++)
+        sLineBuffer[i] = sLineBuffer[i * sSrcW / sOutW];
+
+    sDrawTft->pushImage(sPngOriginX + sOutOffX, sPngOriginY + sOutOffY + outY,
+                        sOutW, 1, sLineBuffer);
     return 1;
 }
 
@@ -113,13 +135,36 @@ void ESP32GraphicsRenderer::drawPng(const std::string& fullPath, int originX, in
 void ESP32GraphicsRenderer::drawImage(const std::string& path)
 {
     mTft.fillScreen(TFT_BLACK);
+    sSrcW = sOutW = 320;  sSrcH = sOutH = 240;
+    sOutOffX = sOutOffY = 0;  sLastOutY = -1;
     drawPng(resolveImagePath(sdPath(path)), 0, 0);
 }
 
-void ESP32GraphicsRenderer::drawImage(const std::string& path, int x, int y, int /*w*/, int /*h*/)
+void ESP32GraphicsRenderer::drawImage(const std::string& path, int x, int y, int w, int h)
 {
-    // Draw the image at (x, y); the active viewport (set by beginContentArea) clips it.
-    drawPng(resolveImagePath(sdPath(path)), x, y);
+    std::string fullPath = resolveImagePath(sdPath(path));
+    Serial.printf("[IMG] drawImage(bounded): %s at=(%d,%d) bounds=(%d,%d)\n",
+                  fullPath.c_str(), x, y, w, h);
+
+    int rc = sPng.open(fullPath.c_str(), pngOpen, pngClose, pngRead, pngSeek, pngDraw);
+    if (rc != PNG_SUCCESS) return;
+
+    sSrcW = sPng.getWidth();
+    sSrcH = sPng.getHeight();
+    float scale = std::min((float)w / sSrcW, (float)h / sSrcH);
+    sOutW    = (int)(sSrcW * scale);
+    sOutH    = (int)(sSrcH * scale);
+    sOutOffX = (w - sOutW) / 2;
+    sOutOffY = (h - sOutH) / 2;
+    sLastOutY   = -1;
+    sPngOriginX = x;
+    sPngOriginY = y;
+
+    mTft.startWrite();
+    int dec = sPng.decode(nullptr, 0);
+    mTft.endWrite();
+    sPng.close();
+    Serial.printf("[IMG] decode rc=%d  scale=%.3f out=(%d,%d)\n", dec, scale, sOutW, sOutH);
 }
 
 // ---------------------------------------------------------------------------

@@ -38,7 +38,8 @@ struct LevelScene
     std::string           name;       // friendly display name
     std::string           md;         // data-root-relative path to .md file, or ""
     std::string           png;        // data-root-relative path to .png file, or ""
-    std::string           password;   // optional ASCII string, max 12 chars, or ""
+    std::string           password;        // optional ASCII string, max 12 chars, or ""
     bool                  isUnlocked = true; // false = show locked overlay; driven by game state
+    std::vector<std::string> multipleChoice; // empty unless scene_info.json has "multipleChoice": [4 strings]
     std::vector<SceneZone> zones;
 };
